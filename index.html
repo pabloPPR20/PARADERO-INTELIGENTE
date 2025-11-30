@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Monitor de Densidad de Paraderos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Leaflet.js for Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Chart.js for Dashboards -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    /* Custom scrollbar for better aesthetics */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+    .dark ::-webkit-scrollbar-track {
+      background: #2d3748;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #718096;
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: #a0aec0;
+    }
+    /* Leaflet map height */
+    .leaflet-container {
+        height: calc(100vh - 200px);
+        border-radius: 0.5rem;
+        z-index: 0;
+    }
+
+    /* --- Dark Mode CSS Overrides --- */
+    html.dark {
+      color-scheme: dark;
+    }
+    html.dark body, html.dark .bg-gray-100 {
+      background-color: #111827; /* Tailwind gray-900 */
+      color: #d1d5db; /* Tailwind gray-300 */
+    }
+    html.dark .bg-white, html.dark .dark\\:bg-gray-800 {
+      background-color: #1f2937; /* Tailwind gray-800 */
+    }
+    html.dark .text-gray-900 { color: #f9fafb; /* gray-50 */ }
+    html.dark .text-gray-800 { color: #f9fafb; /* gray-50 */ }
+    html.dark .text-gray-700 { color: #d1d5db; /* gray-300 */ }
+    html.dark .text-gray-600 { color: #9ca3af; /* gray-400 */ }
+    html.dark .text-gray-500 { color: #9ca3af; /* gray-400 */ }
+    html.dark .border-b, html.dark .dark\\:border-gray-700 { border-color: #374151; /* gray-700 */ }
+    
+    /* --- Smooth Transitions --- */
+    body, .bg-white, .bg-gray-100, .bg-gray-800 {
+      transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+    }
+  </style>
+<script>
+  // Explicitly tell Tailwind how to handle dark mode
+  tailwind.config = {
+    darkMode: 'class',
+  }
+</script>
+<script type="importmap">
+{
+  "imports": {
+    "rxjs": "https://aistudiocdn.com/rxjs@^7.8.2?conditions=es2015",
+    "rxjs/operators": "https://aistudiocdn.com/rxjs@^7.8.2/operators?conditions=es2015",
+    "rxjs/ajax": "https://aistudiocdn.com/rxjs@^7.8.2/ajax?conditions=es2015",
+    "rxjs/webSocket": "https://aistudiocdn.com/rxjs@^7.8.2/webSocket?conditions=es2015",
+    "rxjs/testing": "https://aistudiocdn.com/rxjs@^7.8.2/testing?conditions=es2015",
+    "rxjs/fetch": "https://aistudiocdn.com/rxjs@^7.8.2/fetch?conditions=es2015",
+    "@angular/compiler": "https://next.esm.sh/@angular/compiler@^20.3.12?external=rxjs",
+    "@angular/platform-browser": "https://next.esm.sh/@angular/platform-browser@^20.3.12?external=rxjs",
+    "@angular/common": "https://next.esm.sh/@angular/common@^20.3.12?external=rxjs",
+    "@angular/core": "https://next.esm.sh/@angular/core@^20.3.12?external=rxjs",
+    "@angular/forms": "https://next.esm.sh/@angular/forms@^20.3.12?external=rxjs",
+    "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+  }
+}
+</script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 antialiased">
+  <app-root></app-root>
+</body>
+</html>

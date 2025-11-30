@@ -1,0 +1,5 @@
+{
+  "name": "PARADERO INTELIGENTE",
+  "description": "Una aplicación para visualizar la densidad de personas y el estado de los paraderos de autobús en tiempo real, con datos simulados.",
+  "requestFramePermissions": []
+}

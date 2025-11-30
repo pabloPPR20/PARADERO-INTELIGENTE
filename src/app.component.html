@@ -1,0 +1,233 @@
+<div class="flex flex-col h-screen font-sans">
+  <!-- Header -->
+  <header class="bg-white dark:bg-gray-800 shadow-md z-10 p-4">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center">
+      <div class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white ml-2">Monitor de Paraderos</h1>
+      </div>
+      
+      <!-- Tab Navigation -->
+      <nav class="mt-4 sm:mt-0 flex-wrap flex justify-center space-x-2 sm:space-x-1 p-1 bg-gray-200 dark:bg-gray-700 rounded-lg">
+        @for (tab of ['map', 'dashboard', 'stops', 'system']; track tab) {
+          <button (click)="changeTab(tab)" class="px-3 py-1.5 text-sm font-semibold rounded-md transition-colors duration-200" [class]="activeTab() === tab ? 'bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 shadow' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'">
+            @if (tab === 'map') { <span>Mapa</span> }
+            @if (tab === 'dashboard') { <span>Dashboard</span> }
+            @if (tab === 'stops') { <span>Paraderos</span> }
+            @if (tab === 'system') { <span>Sistema</span> }
+          </button>
+        }
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-100 dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto">
+      @switch (activeTab()) {
+        
+        <!-- MAP TAB -->
+        @case ('map') {
+          <div class="animate-fade-in">
+            <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Mapa en Vivo</h2>
+            <div #mapContainer class="w-full h-[calc(100vh-220px)] rounded-lg shadow-lg"></div>
+          </div>
+        }
+
+        <!-- DASHBOARD TAB -->
+        @case ('dashboard') {
+          <div class="animate-fade-in">
+            <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Dashboard General</h2>
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Paraderos</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalStops() }}</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Personas</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalPeople() }}</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Espera Promedio</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ avgWaitTime() | number:'1.1-1' }} min</p>
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Cámaras Online</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ cameraStats().online }}/{{ cameraStats().total }} ({{ cameraStats().percentage | number:'1.0-0' }}%)</p>
+              </div>
+            </div>
+            <!-- Charts and Rankings -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <h3 class="font-semibold mb-2 text-gray-900 dark:text-white">Personas por Comuna</h3>
+                <div class="h-64"><canvas #peopleByCommuneChart></canvas></div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <h3 class="font-semibold mb-2 text-gray-900 dark:text-white">Distribución de Estados</h3>
+                <div class="h-64"><canvas #congestionChart></canvas></div>
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                 <h3 class="font-semibold mb-2 text-gray-900 dark:text-white">Paraderos más Congestionados</h3>
+                 @for (stop of mostCongested(); track stop.stopId) {
+                   <div class="flex justify-between items-center text-sm py-1 border-b dark:border-gray-700 last:border-0">
+                     <span>{{ stop.location.address }}</span>
+                     <span class="font-bold">{{ stop.personCount }}</span>
+                   </div>
+                 }
+              </div>
+              <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow lg:col-span-2">
+                 <h3 class="font-semibold mb-2 text-gray-900 dark:text-white">Paraderos más Vacíos</h3>
+                 @for (stop of leastCongested(); track stop.stopId) {
+                   <div class="flex justify-between items-center text-sm py-1 border-b dark:border-gray-700 last:border-0">
+                     <span>{{ stop.location.address }}, {{ stop.location.commune }}</span>
+                     <span class="font-bold">{{ stop.personCount }}</span>
+                   </div>
+                 }
+              </div>
+            </div>
+          </div>
+        }
+        
+        <!-- STOPS TAB -->
+        @case ('stops') {
+          <div class="animate-fade-in">
+            <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Lista de Paraderos</h2>
+            <!-- Filters -->
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" placeholder="Buscar por ID o dirección..." class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                <select [ngModel]="communeFilter()" (ngModelChange)="communeFilter.set($event)" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                  <option value="all">Todas las comunas</option>
+                  @for (commune of communes(); track commune) { <option [value]="commune">{{ commune }}</option> }
+                </select>
+                <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                  <option value="all">Todos los estados</option>
+                  <option value="low">Bajo</option>
+                  <option value="medium">Medio</option>
+                  <option value="high">Alto</option>
+                  <option value="critical">Crítico</option>
+                </select>
+              </div>
+            </div>
+            <!-- Stop Cards -->
+            @if (loading() && filteredStops().length === 0) {
+              <div class="text-center py-16 text-gray-500 dark:text-gray-400">Cargando paraderos...</div>
+            } @else if (filteredStops().length === 0) {
+              <div class="text-center py-16 text-gray-500 dark:text-gray-400">No se encontraron paraderos con los filtros seleccionados.</div>
+            } @else {
+              <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                @for (stop of filteredStops(); track stop.stopId) {
+                  <div class="border-l-4 rounded-lg shadow-lg overflow-hidden transition-transform transform hover:scale-105 duration-300" [class]="getStatusClasses(stop.status)">
+                    <div class="p-5 bg-white dark:bg-gray-800">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ stop.stopId }}</p>
+                          <h3 class="text-xl font-bold text-gray-900 dark:text-white">{{ stop.location.address }}</h3>
+                          <p class="text-sm text-gray-500 dark:text-gray-400">{{ stop.location.commune }}</p>
+                        </div>
+                        <span class="text-xs font-bold uppercase px-3 py-1 rounded-full flex-shrink-0" [class]="getStatusBadgeClasses(stop.status)">{{ stop.status }}</span>
+                      </div>
+                      <div class="grid grid-cols-2 gap-4 mt-6 text-center">
+                        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                          <p class="text-sm text-gray-500 dark:text-gray-400">Personas</p>
+                          <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stop.personCount }}</p>
+                        </div>
+                        <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                          <p class="text-sm text-gray-500 dark:text-gray-400">Espera (min)</p>
+                          <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stop.avgWaitTimeMinutes | number:'1.1-1' }}</p>
+                        </div>
+                      </div>
+                      <div class="mt-6">
+                        <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Cámaras</h4>
+                        @if (stop.cameras.length > 0) {
+                          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            @for (camera of stop.cameras; track camera.cameraId) {
+                              <div (click)="navigateToParadero(stop.stopId, camera.cameraId)" class="relative rounded-md overflow-hidden group cursor-pointer">
+                                <img [src]="camera.url" [alt]="'Vista ' + camera.cameraId" class="w-full h-20 object-cover" [class.grayscale]="camera.status === 'offline'">
+                                <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <span class="w-3 h-3 rounded-full mr-1" [class]="camera.status === 'online' ? 'bg-green-400' : 'bg-red-400'"></span>
+                                  <span class="text-white font-bold text-xs">{{ camera.status === 'online' ? 'Ver' : 'Offline' }}</span>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        } @else {
+                          <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">No hay cámaras.</p>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- SYSTEM TAB -->
+        @case ('system') {
+          <div class="animate-fade-in max-w-lg mx-auto">
+            <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Configuración y Estado</h2>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md space-y-6">
+              <!-- Theme Toggle -->
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Modo Oscuro</span>
+                <button (click)="toggleDarkMode()" type="button" class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" [class]="isDarkMode() ? 'bg-blue-600' : 'bg-gray-200'" role="switch">
+                  <span class="pointer-events-none relative inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200" [class]="isDarkMode() ? 'translate-x-5' : 'translate-x-0'">
+                    <span class="absolute inset-0 h-full w-full flex items-center justify-center transition-opacity" [class]="isDarkMode() ? 'opacity-0 ease-out duration-100' : 'opacity-100 ease-in duration-200'">
+                      <svg class="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 12 12"><path d="M4 8l2-2l2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    </span>
+                    <span class="absolute inset-0 h-full w-full flex items-center justify-center transition-opacity" [class]="isDarkMode() ? 'opacity-100 ease-in duration-200' : 'opacity-0 ease-out duration-100'">
+                      <svg class="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 12 12"><path d="M3.707 5.293a1 1 0 00-1.414 1.414l1.414-1.414zM5 8l-.707.707a1 1 0 001.414 0L5 8zm4.707-3.293a1 1 0 00-1.414-1.414l1.414 1.414zm-1.414 1.414l-2 2 .001.001-2-2L3.707 5.293 2.293 6.707l2 2L5 9.414l.707-.707 2-2z"></path></svg>
+                    </span>
+                  </span>
+                </button>
+              </div>
+              <!-- System Status -->
+              <div class="border-t pt-6 dark:border-gray-700 space-y-4">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500 dark:text-gray-400">Estado de la API</span>
+                  <span class="font-semibold text-green-600 dark:text-green-400">Operacional</span>
+                </div>
+                 <div class="flex justify-between text-sm">
+                  <span class="text-gray-500 dark:text-gray-400">Conexión en Tiempo Real</span>
+                  <span class="font-semibold text-green-600 dark:text-green-400">Activa</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500 dark:text-gray-400">Última Actualización</span>
+                  <span class="font-semibold">{{ lastUpdated() | date:'mediumTime' }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500 dark:text-gray-400">Tiempo de Respuesta Inicial</span>
+                  <span class="font-semibold">{{ responseTime() | number:'1.0-0' }} ms</span>
+                </div>
+              </div>
+              <button (click)="loadData()" [disabled]="loading()" class="mt-4 w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition-all duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed">
+                  @if (loading()) {
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>Actualizando...</span>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 4l5 5M20 20l-5-5" /></svg>
+                    <span>Forzar Actualización</span>
+                  }
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </main>
+</div>
+
+<!-- Global Loading Spinner -->
+@if (loading() && busStops().length === 0) {
+  <div class="fixed inset-0 bg-gray-100 dark:bg-gray-900 z-50 flex flex-col items-center justify-center">
+    <svg class="animate-spin h-12 w-12 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <p class="mt-4 text-lg text-gray-600 dark:text-gray-400">Cargando datos de paraderos...</p>
+  </div>
+}
